@@ -31,18 +31,14 @@ public:
     QString getAtributo() const { return atributo; }
     void setAtributo(const QString& value){ atributo = value; }
 
-    bool getOk() const{ return ok; }
-    void setOk(bool value){ ok = value; }
-
 private:
     int R;
     int G;
     int B;
     int Count;
     QString key;
-    double peImg;
+    double peImg = 0;
     QString atributo;
-    bool ok;
 };
 
 #endif // COLORPROCESS_H

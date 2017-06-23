@@ -33,7 +33,7 @@ private:
     int width;
 
 private:
-    void extract(QString arg);
+    QString extract(QString arg, bool teste);
     QList<ColorProcess*> getPaleta();
 };
 

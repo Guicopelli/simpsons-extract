@@ -5,6 +5,8 @@
 #include <QDebug>
 #include "colorprocess.h"
 #include <QtMath>
+#include <QDir>
+#include <QDirIterator>
 
 #define BASE_ARQUIVO "@relation Simpsons \
     @attribute personagem{bart, homer} \
@@ -41,21 +43,41 @@ void MainWindow::on_pushButton_clicked(){
     QFileDialog dialog(this);
     dialog.setNameFilter(tr("Images (*.png *.xpm *.jpg)"));
 
-    QString dir = QFileDialog::getExistingDirectory(this, tr("Open Directory"), "/home", QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+    QString dir = QFileDialog::getExistingDirectory(this, tr("Open Directory"), QDir::currentPath(), QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+    QStringList results;
 
-    qDebug() << dir;
-    //TODO - percorrer e pegar todas as imagens do diretorio
+    //pega todos os arquivos .bmp do diretorio
+    QDirIterator it(dir, QStringList() << "*.bmp", QDir::Files, QDirIterator::Subdirectories);
+    while (it.hasNext()){
+        qDebug() << it.next();
+        QString file = it.next();
+        QString extractResponse = extract(file, false);
+        results.append( extractResponse );
+    }
 
+    qDebug() << results;
 }
 
 void MainWindow::on_pushButton_2_clicked(){
-//    QString fileName = QFileDialog::getOpenFileName(this, tr("Open Image"), "/home", tr("Image Files (*.png *.jpg *.bmp)"));
+//    QString fileName = QFileDialog::getOpenFileName(this, tr("Open Image"), QDir::currentPath(), tr("Image Files (*.png *.jpg *.bmp)"));
 
-    extract( "/home/bruno/Documentos/simpsons-extract/resource/Test/bart116.bmp");
+    extract( "/home/bruno/Documentos/simpsons-extract/resource/Test/bart116.bmp", true);
 }
 
-void MainWindow::extract(QString arg){
+QString MainWindow::extract(QString arg, bool teste){
     QImage img( arg );
+    QString personagem;
+
+    if(!teste){
+        personagem = "?";
+    }else{
+        if(arg.contains( "bart",  Qt::CaseInsensitive)){
+            personagem = "bart";
+        }else{
+            personagem = "homer";
+        }
+    }
+
     qDebug() << arg;
 
     if ( false == img.isNull() ){
@@ -152,22 +174,26 @@ void MainWindow::extract(QString arg){
         qDebug() << colorProcessed->getKey() << " ocorrencias: " << colorProcessed->getCount() << " percento: " << peImg;
     }
 
-    //Monta o arquivo de saida
-    QString exit;
-    for(ColorProcess* color : getPaleta()){
-
+    //Coloca os dados na ordem correta
+    QList<ColorProcess*> coresFinais = getPaleta();
+    for(ColorProcess* color : coresFinais){
         for(ColorProcess* colorProcessed : mapColorsProcessed.values()){
-            if(!colorProcessed->getOk() && color->getAtributo() == colorProcessed->getAtributo()){
-                exit += QString::number( colorProcessed->getPeImg() ) + ",";
-                colorProcessed->setOk( true);
-            }else{
-                exit += "0,";
-                colorProcessed->setOk( true);
+            if(color->getAtributo() == colorProcessed->getAtributo()){
+                color->setPeImg( colorProcessed->getPeImg() );
             }
         }
     }
 
-    qDebug() << exit;
+    //monta a string
+    QString exit = personagem + ",";
+    for(ColorProcess* color : coresFinais){
+        exit += QString::number(color->getPeImg()) + ",";
+    }
+
+    //remove a ultima virgula
+    exit.remove(exit.length() - 1, 1);
+
+    return exit;
 }
 
 QList<ColorProcess*> MainWindow::getPaleta(){
