@@ -7,6 +7,7 @@
 #include <QtMath>
 #include <QDir>
 #include <QDirIterator>
+#include <QPixmap>
 
 #define BASE_ARQUIVO "@relation Simpsons \
     @attribute personagem{bart, homer} \
@@ -49,25 +50,27 @@ void MainWindow::on_pushButton_clicked(){
     //pega todos os arquivos .bmp do diretorio
     QDirIterator it(dir, QStringList() << "*.bmp", QDir::Files, QDirIterator::Subdirectories);
     while (it.hasNext()){
-        qDebug() << it.next();
+//        qDebug() << it.next();
         QString file = it.next();
         QString extractResponse = extract(file, false);
         results.append( extractResponse );
     }
 
-    qDebug() << results;
+//    qDebug() << results;
 }
 
 void MainWindow::on_pushButton_2_clicked(){
-//    QString fileName = QFileDialog::getOpenFileName(this, tr("Open Image"), QDir::currentPath(), tr("Image Files (*.png *.jpg *.bmp)"));
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Open Image"), QDir::currentPath(), tr("Image Files (*.png *.jpg *.bmp)"));
 
-    extract( "/home/bruno/Documentos/simpsons-extract/resource/Test/bart116.bmp", true);
+    extract( fileName, true);
 }
 
 QString MainWindow::extract(QString arg, bool teste){
     QImage img( arg );
     QString personagem;
+    QPixmap pixImg( arg );
 
+    ui->lbl_img->setPixmap( pixImg);
     if(!teste){
         personagem = "?";
     }else{
@@ -77,8 +80,6 @@ QString MainWindow::extract(QString arg, bool teste){
             personagem = "homer";
         }
     }
-
-    qDebug() << arg;
 
     if ( false == img.isNull() ){
         height = img.height();
@@ -125,30 +126,42 @@ QString MainWindow::extract(QString arg, bool teste){
     //calcular distancia euclidiana entre a paleta de cores e as cores coletadas
     //depois faz a troca pela cor na paleta de cores pegando a mais proxima
     //D = raiz( (R1-R2)^2 + (G1-G2)^2 + (B1-B2)^2 )
+    ColorProcess* colorAnterior = new ColorProcess;
+    ColorProcess* colorResultAnterior = new ColorProcess;
+
     for(ColorProcess* colorToProcess : mapColorsProcess.values()){
         double result;
         double mimResult = 999999999;
 
         ColorProcess* colorSub = new ColorProcess; //cor para substituir
 
-        for(ColorProcess* colorPaleta : getPaleta()){
-            result = qPow((colorToProcess->getR() - colorPaleta->getR()), 2) +
-                    qPow((colorToProcess->getG() - colorPaleta->getG()), 2) +
-                    qPow((colorToProcess->getB() - colorPaleta->getB()), 2);
 
-            result = qSqrt(result);
+        if (colorAnterior->getKey()!=colorToProcess->getKey()){
 
-            if(result < mimResult){
-                *colorSub = *colorPaleta;
-                mimResult = result;
+            for(ColorProcess* colorPaleta : getPaleta()){
+                result = qPow((colorToProcess->getR() - colorPaleta->getR()), 2) +
+                        qPow((colorToProcess->getG() - colorPaleta->getG()), 2) +
+                        qPow((colorToProcess->getB() - colorPaleta->getB()), 2);
+
+                result = qSqrt(result);
+
+                if(result < mimResult){
+                    *colorSub = *colorPaleta;
+                    mimResult = result;
+                }
             }
+
+            colorSub->setCount( colorToProcess->getCount());
+
+            colorSub->setKey( QString::number(colorSub->getR()) + " ," +
+                              QString::number(colorSub->getG()) + " ," +
+                              QString::number(colorSub->getB()));
+
+            *colorAnterior = *colorToProcess;
+            *colorResultAnterior = *colorSub;
+        }else{
+            *colorSub = *colorResultAnterior;
         }
-
-        colorSub->setCount( colorToProcess->getCount());
-
-        colorSub->setKey( QString::number(colorSub->getR()) + " ," +
-                          QString::number(colorSub->getG()) + " ," +
-                          QString::number(colorSub->getB()));
 
 
         if (mapColorsProcessed.contains( colorSub->getKey() )){
@@ -171,7 +184,7 @@ QString MainWindow::extract(QString arg, bool teste){
         double peImg = ( ( ocur / (width*height) ) * 100 );
         colorProcessed->setPeImg( peImg );
 
-        qDebug() << colorProcessed->getKey() << " ocorrencias: " << colorProcessed->getCount() << " percento: " << peImg;
+//        qDebug() << colorProcessed->getKey() << " ocorrencias: " << colorProcessed->getCount() << " percento: " << peImg;
     }
 
     //Coloca os dados na ordem correta
