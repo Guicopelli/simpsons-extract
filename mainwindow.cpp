@@ -101,7 +101,7 @@ void MainWindow::extract(QString arg){
     }
 
     //calcular distancia euclidiana entre a paleta de cores e as cores coletadas
-    //faz a troco pela cor na paeta de cores
+    //depois faz a troca pela cor na paleta de cores pegando a mais proxima
     //D = raiz( (R1-R2)^2 + (G1-G2)^2 + (B1-B2)^2 )
     for(ColorProcess* colorToProcess : mapColorsProcess.values()){
         double result;
@@ -142,35 +142,51 @@ void MainWindow::extract(QString arg){
         }
     }
 
-    for(ColorProcess* colorToProcess : mapColorsProcessed.values()){
+    //Calcula o percentual que a cor representa na imagem
+    for(ColorProcess* colorProcessed : mapColorsProcessed.values()){
         //(ocorrencias / (largura*altura))*100
-        double ocur = colorToProcess->getCount();
+        double ocur = colorProcessed->getCount();
         double peImg = ( ( ocur / (width*height) ) * 100 );
-        colorToProcess->setPeImg( peImg );
+        colorProcessed->setPeImg( peImg );
 
-        qDebug() << colorToProcess->getKey() << " ocorrencias: " << colorToProcess->getCount() << " percento: " << peImg;
+        qDebug() << colorProcessed->getKey() << " ocorrencias: " << colorProcessed->getCount() << " percento: " << peImg;
     }
 
+    //Monta o arquivo de saida
+    QString exit;
+    for(ColorProcess* color : getPaleta()){
 
+        for(ColorProcess* colorProcessed : mapColorsProcessed.values()){
+            if(!colorProcessed->getOk() && color->getAtributo() == colorProcessed->getAtributo()){
+                exit += QString::number( colorProcessed->getPeImg() ) + ",";
+                colorProcessed->setOk( true);
+            }else{
+                exit += "0,";
+                colorProcessed->setOk( true);
+            }
+        }
+    }
+
+    qDebug() << exit;
 }
 
 QList<ColorProcess*> MainWindow::getPaleta(){
     QList<ColorProcess*> colors;
 
-    colors.append(new ColorProcess( 246,188,0 ));// amarelo
-    colors.append(new ColorProcess( 255,86,0 ));// laranja camiseta bart
-    colors.append(new ColorProcess( 10,50,138 ));// azulcalca bart
-    colors.append(new ColorProcess( 50,201,0 ));// verde
-    colors.append(new ColorProcess( 10,10,10 ));// preto
-    colors.append(new ColorProcess( 255,255,255 ));// branco
-    colors.append(new ColorProcess( 211,172,106 ));// barba Homer
-    colors.append(new ColorProcess( 65,115,178 ));// calca Homer
-    colors.append(new ColorProcess( 200,0,200 ));// chiclete 1, 22
-    colors.append(new ColorProcess( 255,0,0 ));// vermelho
-    colors.append(new ColorProcess( 52,208,255 ));// azul marinho
-    colors.append(new ColorProcess( 121,132,141 ));// cinza
-    colors.append(new ColorProcess( 199,101,0 ));// marrom quadro bart
-    colors.append(new ColorProcess( 13,155,100 ));// verde chapeu bart
+    colors.append(new ColorProcess( 246,188,0, "cF6BC0" ));// amarelo
+    colors.append(new ColorProcess( 255,86,0, "cFF560" ));// laranja camiseta bart
+    colors.append(new ColorProcess( 10,50,138, "cA328A" ));// azulcalca bart
+    colors.append(new ColorProcess( 50,201,0, "c32C90" ));// verde
+    colors.append(new ColorProcess( 10,10,10, "cAAA" ));// preto
+    colors.append(new ColorProcess( 255,255,255, "cFFFFFF" ));// branco
+    colors.append(new ColorProcess( 211,172,106, "cD3AC6A" ));// barba Homer
+    colors.append(new ColorProcess( 65,115,178, "c4173B2" ));// calca Homer
+    colors.append(new ColorProcess( 200,0,200, "cC80C8" ));// chiclete 1, 22
+    colors.append(new ColorProcess( 255,0,0, "cFF00" ));// vermelho
+    colors.append(new ColorProcess( 52,208,255, "c34D0FF" ));// azul marinho
+    colors.append(new ColorProcess( 121,132,141, "c79848D" ));// cinza
+    colors.append(new ColorProcess( 199,101,0, "cC7650" ));// marrom quadro bart
+    colors.append(new ColorProcess( 13,155,100, "cD9B64" ));// verde chapeu bart
 
     return colors;
 }

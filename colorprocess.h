@@ -8,6 +8,7 @@ class ColorProcess {
 public:
     ColorProcess( ){ }
     ColorProcess(int colorR, int colorG, int colorB){ R = colorR; G = colorG; B = colorB; }
+    ColorProcess(int colorR, int colorG, int colorB, QString ref){ R = colorR; G = colorG; B = colorB; atributo = ref; }
 
     int getR() const{ return R; }
     void setR(int value){ R = value; }
@@ -27,6 +28,12 @@ public:
     double getPeImg() const{ return peImg; }
     void setPeImg(double value){ peImg = value; }
 
+    QString getAtributo() const { return atributo; }
+    void setAtributo(const QString& value){ atributo = value; }
+
+    bool getOk() const{ return ok; }
+    void setOk(bool value){ ok = value; }
+
 private:
     int R;
     int G;
@@ -34,6 +41,8 @@ private:
     int Count;
     QString key;
     double peImg;
+    QString atributo;
+    bool ok;
 };
 
 #endif // COLORPROCESS_H
