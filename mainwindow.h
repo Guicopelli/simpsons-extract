@@ -4,6 +4,8 @@
 #include <QMainWindow>
 #include <QMap>
 #include <QString>
+#include <QList>
+#include "colorprocess.h"
 
 namespace Ui {
 class MainWindow;
@@ -24,9 +26,15 @@ private slots:
 private:
     Ui::MainWindow *ui;
 
+    QMap<QString, int> mapColors;
+    QMap<QString, ColorProcess*> mapColorsProcess;
+    QMap<QString, ColorProcess*> mapColorsProcessed;
+    int height;
+    int width;
+
 private:
     void extract(QString arg);
-    QMap<QString, int> mapColors;
+    QList<ColorProcess*> getPaleta();
 };
 
 #endif // MAINWINDOW_H
