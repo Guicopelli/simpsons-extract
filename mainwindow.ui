@@ -31,6 +31,9 @@
         <property name="text">
          <string>Pronto para começar</string>
         </property>
+        <property name="scaledContents">
+         <bool>true</bool>
+        </property>
         <property name="alignment">
          <set>Qt::AlignCenter</set>
         </property>
@@ -64,7 +67,7 @@
      <x>0</x>
      <y>0</y>
      <width>377</width>
-     <height>22</height>
+     <height>19</height>
     </rect>
    </property>
   </widget>

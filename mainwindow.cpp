@@ -66,11 +66,14 @@ void MainWindow::on_pushButton_2_clicked(){
 }
 
 QString MainWindow::extract(QString arg, bool teste){
-    QImage img( arg );
     QString personagem;
     QPixmap pixImg( arg );
 
     ui->lbl_img->setPixmap( pixImg);
+
+    QApplication::processEvents();
+
+    QImage img( arg );
     if(!teste){
         personagem = "?";
     }else{
@@ -88,6 +91,7 @@ QString MainWindow::extract(QString arg, bool teste){
         //pega todas as cores adiciona em um map e conta a quantidade de cada uma
         for ( int row = 1; row < img.height() + 1; ++row ){
             for ( int col = 1; col < img.width() + 1; ++col ){
+                QApplication::processEvents();
                 QColor clrCurrent( img.pixel( row, col ) );
 
                 QString color = QString::number(clrCurrent.red()) + ", "
