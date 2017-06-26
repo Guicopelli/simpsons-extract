@@ -31,6 +31,10 @@ public:
     QString getAtributo() const { return atributo; }
     void setAtributo(const QString& value){ atributo = value; }
 
+    QString getPeImgStr() const{ return peImgStr; }
+    void setPeImgStr(const QString &value){ peImgStr = value; }
+
+
 private:
     int R;
     int G;
@@ -39,6 +43,8 @@ private:
     QString key;
     double peImg = 0;
     QString atributo;
+    QString peImgStr;
+
 };
 
 #endif // COLORPROCESS_H

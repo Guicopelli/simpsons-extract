@@ -142,5 +142,7 @@
         <file>resource/Train/homer60.bmp</file>
         <file>resource/Train/homer61.bmp</file>
         <file>resource/Train/homer62.bmp</file>
+        <file alias="cat.gif">resource/gif/cat.gif</file>
+        <file alias="loading.gif">resource/gif/loading.gif</file>
     </qresource>
 </RCC>

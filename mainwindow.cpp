@@ -8,24 +8,28 @@
 #include <QDir>
 #include <QDirIterator>
 #include <QPixmap>
+#include <QRgb>
+#include <QVector>
+#include <QMovie>
+#include <QThread>
 
-#define BASE_ARQUIVO "@relation Simpsons \
-    @attribute personagem{bart, homer} \
-    @attribute cF6BC0 numeric \
-    @attribute cFF560 numeric \
-    @attribute cA328A numeric \
-    @attribute c32C90 numeric \
-    @attribute cAAA numeric \
-    @attribute cFFFFFF numeric \
-    @attribute cD3AC6A numeric \
-    @attribute c4173B2 numeric \
-    @attribute cC80C8 numeric \
-    @attribute cFF00 numeric \
-    @attribute c34D0FF numeric \
-    @attribute c79848D numeric \
-    @attribute cC7650 numeric \
-    @attribute cD9B64 numeric \
-    @data"
+#define BASE_ARQUIVO "@relation Simpsons\n \
+@attribute personagem{bart, homer}\n \
+@attribute cF6BC0 numeric\n \
+@attribute cFF560 numeric\n \
+@attribute cA328A numeric\n \
+@attribute c32C90 numeric\n \
+@attribute cAAA numeric\n \
+@attribute cFFFFFF numeric\n \
+@attribute cD3AC6A numeric\n \
+@attribute c4173B2 numeric\n \
+@attribute cC80C8 numeric\n \
+@attribute cFF00 numeric\n \
+@attribute c34D0FF numeric\n \
+@attribute c79848D numeric\n \
+@attribute cC7650 numeric\n \
+@attribute cD9B64 numeric\n \
+@data\n"
 
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -41,31 +45,35 @@ MainWindow::~MainWindow()
 }
 
 void MainWindow::on_pushButton_clicked(){
-    QFileDialog dialog(this);
-    dialog.setNameFilter(tr("Images (*.png *.xpm *.jpg)"));
-
     QString dir = QFileDialog::getExistingDirectory(this, tr("Open Directory"), QDir::currentPath(), QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+    if(dir.isEmpty())
+        return;
+
     QStringList results;
 
     //pega todos os arquivos .bmp do diretorio
     QDirIterator it(dir, QStringList() << "*.bmp", QDir::Files, QDirIterator::Subdirectories);
     while (it.hasNext()){
-//        qDebug() << it.next();
         QString file = it.next();
-        QString extractResponse = extract(file, false);
+        QString extractResponse = extract(file, true);
         results.append( extractResponse );
     }
 
-//    qDebug() << results;
+    QString res = results.join("\n");
+    ui->txtResult->setText( BASE_ARQUIVO + res);
 }
 
 void MainWindow::on_pushButton_2_clicked(){
     QString fileName = QFileDialog::getOpenFileName(this, tr("Open Image"), QDir::currentPath(), tr("Image Files (*.png *.jpg *.bmp)"));
 
-    extract( fileName, true);
+    if(fileName.isEmpty())
+        return;
+
+    ui->txtResult->setText( BASE_ARQUIVO + extract( fileName, false));
 }
 
 QString MainWindow::extract(QString arg, bool teste){
+
     QString personagem;
     QPixmap pixImg( arg );
 
@@ -77,7 +85,7 @@ QString MainWindow::extract(QString arg, bool teste){
     if(!teste){
         personagem = "?";
     }else{
-        if(arg.contains( "bart",  Qt::CaseInsensitive)){
+        if(arg.contains( "bart", Qt::CaseInsensitive)){
             personagem = "bart";
         }else{
             personagem = "homer";
@@ -89,10 +97,9 @@ QString MainWindow::extract(QString arg, bool teste){
         width = img.width();
 
         //pega todas as cores adiciona em um map e conta a quantidade de cada uma
-        for ( int row = 1; row < img.height() + 1; ++row ){
-            for ( int col = 1; col < img.width() + 1; ++col ){
-                QApplication::processEvents();
-                QColor clrCurrent( img.pixel( row, col ) );
+        for ( int row = 0; row < img.height() ; row++ ){
+            for ( int col = 0; col < img.width() ; col++ ){
+                QColor clrCurrent( img.pixel( col, row ) );
 
                 QString color = QString::number(clrCurrent.red()) + ", "
                           + QString::number(clrCurrent.green()) + ", "
@@ -130,8 +137,6 @@ QString MainWindow::extract(QString arg, bool teste){
     //calcular distancia euclidiana entre a paleta de cores e as cores coletadas
     //depois faz a troca pela cor na paleta de cores pegando a mais proxima
     //D = raiz( (R1-R2)^2 + (G1-G2)^2 + (B1-B2)^2 )
-    ColorProcess* colorAnterior = new ColorProcess;
-    ColorProcess* colorResultAnterior = new ColorProcess;
 
     for(ColorProcess* colorToProcess : mapColorsProcess.values()){
         double result;
@@ -139,33 +144,25 @@ QString MainWindow::extract(QString arg, bool teste){
 
         ColorProcess* colorSub = new ColorProcess; //cor para substituir
 
+        for(ColorProcess* colorPaleta : getPaleta()){
+            result = qPow((colorToProcess->getR() - colorPaleta->getR()), 2) +
+                    qPow((colorToProcess->getG() - colorPaleta->getG()), 2) +
+                    qPow((colorToProcess->getB() - colorPaleta->getB()), 2);
 
-        if (colorAnterior->getKey()!=colorToProcess->getKey()){
+            result = qSqrt(result);
 
-            for(ColorProcess* colorPaleta : getPaleta()){
-                result = qPow((colorToProcess->getR() - colorPaleta->getR()), 2) +
-                        qPow((colorToProcess->getG() - colorPaleta->getG()), 2) +
-                        qPow((colorToProcess->getB() - colorPaleta->getB()), 2);
-
-                result = qSqrt(result);
-
-                if(result < mimResult){
-                    *colorSub = *colorPaleta;
-                    mimResult = result;
-                }
+            if(result < mimResult){
+                *colorSub = *colorPaleta;
+                mimResult = result;
             }
-
-            colorSub->setCount( colorToProcess->getCount());
-
-            colorSub->setKey( QString::number(colorSub->getR()) + " ," +
-                              QString::number(colorSub->getG()) + " ," +
-                              QString::number(colorSub->getB()));
-
-            *colorAnterior = *colorToProcess;
-            *colorResultAnterior = *colorSub;
-        }else{
-            *colorSub = *colorResultAnterior;
         }
+
+        colorSub->setCount( colorToProcess->getCount());
+
+        colorSub->setKey( QString::number(colorSub->getR()) + " ," +
+                          QString::number(colorSub->getG()) + " ," +
+                          QString::number(colorSub->getB()));
+
 
 
         if (mapColorsProcessed.contains( colorSub->getKey() )){
@@ -181,14 +178,14 @@ QString MainWindow::extract(QString arg, bool teste){
         }
     }
 
+
     //Calcula o percentual que a cor representa na imagem
     for(ColorProcess* colorProcessed : mapColorsProcessed.values()){
         //(ocorrencias / (largura*altura))*100
         double ocur = colorProcessed->getCount();
-        double peImg = ( ( ocur / (width*height) ) * 100 );
-        colorProcessed->setPeImg( peImg );
+        double peImg = ( ( ocur / (width*height) )  );
 
-//        qDebug() << colorProcessed->getKey() << " ocorrencias: " << colorProcessed->getCount() << " percento: " << peImg;
+        colorProcessed->setPeImg( peImg );
     }
 
     //Coloca os dados na ordem correta
@@ -204,13 +201,23 @@ QString MainWindow::extract(QString arg, bool teste){
     //monta a string
     QString exit = personagem + ",";
     for(ColorProcess* color : coresFinais){
-        exit += QString::number(color->getPeImg()) + ",";
+        exit += QString::number( color->getPeImg(), 'f', 10) + ",";
     }
+
+    //limpa os objetos para a proxima imagem
+    mapColors.clear();
+
+    qDeleteAll( mapColorsProcess );
+    mapColorsProcess.clear();
+
+    qDeleteAll( mapColorsProcessed );
+    mapColorsProcessed.clear();
 
     //remove a ultima virgula
     exit.remove(exit.length() - 1, 1);
 
     return exit;
+
 }
 
 QList<ColorProcess*> MainWindow::getPaleta(){
